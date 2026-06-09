@@ -12,12 +12,16 @@ use Illuminate\View\View;
 class ProfileController extends Controller
 {
     /**
-     * Display the user's profile form.
+     * Display the user's profile form and order history.
      */
     public function edit(Request $request): View
     {
+        // Kullanıcının siparişlerini ilişkisel olarak çekiyoruz (User modelindeki orders() fonksiyonu sayesinde)
+        $orders = $request->user()->orders()->latest()->get();
+
         return view('profile.edit', [
             'user' => $request->user(),
+            'orders' => $orders, // Siparişleri view'a gönderdik
         ]);
     }
 

@@ -16,12 +16,21 @@ class CartController extends Controller
         $product = Product::findOrFail($id);
         $cart = session()->get('cart', []);
 
+        // Arayüzden gelen adet (quantity) bilgisini alıyoruz, seçilmediyse veya hatalıysa 1 kabul ediyoruz
+        $qty = (int) $request->input('quantity', 1);
+        if ($qty < 1) {
+            $qty = 1;
+        }
+
         if(isset($cart[$id])) {
-            $cart[$id]['quantity']++;
+            // Önceden sepette varsa, yeni seçilen adeti üzerine ekliyoruz
+            $cart[$id]['quantity'] += $qty;
         } else {
+            // İlk defa ekleniyorsa seçilen adetle birlikte ekliyoruz
             $cart[$id] = [
+                "id"       => $product->id,
                 "title"    => $product->title,
-                "quantity" => 1,
+                "quantity" => $qty,
                 "price"    => $product->price,
                 "image"    => $product->image
             ];
@@ -36,8 +45,24 @@ class CartController extends Controller
     public function index() 
     {
         $cart = session()->get('cart', []);
+        
+        $cartTotal = 0;
+        $cartItems = collect(); 
+        
+        foreach($cart as $id => $details) {
+            $cartTotal += $details['price'] * $details['quantity'];
+            
+            // HATA ÇÖZÜMÜ: Eğer hafızada kalan eski ürünlerde 'id' yoksa, otomatik ekle
+            if (!isset($details['id'])) {
+                $details['id'] = $id;
+            }
+
+            $cartItems->push((object) $details);
+        }
+
         $recommendedProducts = Product::inRandomOrder()->limit(4)->get();
-        return view('sepetim', compact('cart', 'recommendedProducts'));
+        
+        return view('sepetim', compact('cart', 'cartItems', 'cartTotal', 'recommendedProducts'));
     }
 
     public function remove($id)
@@ -80,8 +105,6 @@ class CartController extends Controller
                     throw new \Exception("Ürün veritabanında bulunamadı.");
                 }
 
-                // GÜVENLİ STOK KONTROLÜ
-                // Veritabanı değeri boşsa 0 kabul et
                 $dbStock = (int)($product->stock ?? 0);
                 $cartQty = (int)$item['quantity'];
 
@@ -89,7 +112,6 @@ class CartController extends Controller
                     throw new \Exception($item['title'] . ' için stok yetersiz. Mevcut Stok: ' . $dbStock);
                 }
 
-                // Stok güncelleme
                 $product->stock = $dbStock - $cartQty;
                 $product->save();
 

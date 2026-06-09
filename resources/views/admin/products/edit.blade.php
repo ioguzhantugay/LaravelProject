@@ -10,6 +10,17 @@
 <div class="container mt-5">
     <div class="row">
         <div class="col-md-8 offset-md-2">
+            
+            @if ($errors->any())
+                <div class="alert alert-danger">
+                    <ul>
+                        @foreach ($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
+
             <div class="card shadow">
                 <div class="card-header bg-warning text-dark">
                     <h4 class="mb-0">Düzenleniyor: {{ $product->title }}</h4>
@@ -23,6 +34,18 @@
                             <label class="font-weight-bold">Ürün Adı</label>
                             <input type="text" name="title" class="form-control" value="{{ $product->title }}" required>
                         </div>
+
+                        <div class="form-group mb-3">
+                            <label class="font-weight-bold">Kategori</label>
+                            <select name="category_id" class="form-control" required>
+                                <option value="">Kategori Seçin</option>
+                                @foreach($categories as $category)
+                                    <option value="{{ $category->id }}" {{ $product->category_id == $category->id ? 'selected' : '' }}>
+                                        {{ $category->name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
                         
                         <div class="form-group mb-3">
                             <label class="font-weight-bold">Fiyat (₺)</label>
@@ -31,12 +54,16 @@
 
                         <div class="form-group mb-3">
                             <label class="font-weight-bold">Stok Adedi</label>
-                            <input type="number" name="quantity" class="form-control" value="{{ $product->quantity }}" required>
+                            <input type="number" name="stock" class="form-control" value="{{ $product->stock }}" required>
                         </div>
 
                         <div class="form-group mb-3">
                             <label class="font-weight-bold">Mevcut Resim:</label><br>
-                            <img src="{{ asset($product->image) }}" class="img-thumbnail" width="150" alt="Ürün Resmi">
+                            @if($product->image)
+                                <img src="{{ asset($product->image) }}" class="img-thumbnail" width="150" alt="Ürün Resmi">
+                            @else
+                                <span class="text-muted">Resim yok</span>
+                            @endif
                         </div>
                         
                         <div class="form-group mb-3">

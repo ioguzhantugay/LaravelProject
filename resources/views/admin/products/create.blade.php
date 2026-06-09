@@ -56,7 +56,7 @@
                             </div>
                             <div class="col-md-6 form-group mb-3">
                                 <label class="font-weight-bold">Stok Adedi</label>
-                                <input type="number" name="quantity" class="form-control" value="{{ old('quantity') }}" required>
+                                <input type="number" name="stock" class="form-control" value="{{ old('stock') }}" required>
                             </div>
                         </div>
                         

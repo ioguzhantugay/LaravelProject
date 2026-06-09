@@ -2,62 +2,116 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <title>Sepetim | Akvaryum Dünyası</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sepetim | Xeplin Petshop</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
-        body { background-color: #f8f9fa; }
-        .cart-card { border: none; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        .cart-img { width: 70px; height: 70px; object-fit: cover; border-radius: 8px; }
-        .method-box { background: #fff; border-radius: 10px; padding: 20px; border: 1px solid #eee; }
-        .btn-trendyol { background-color: #f27a1a; color: white; font-weight: 600; }
-        .btn-success-custom { background-color: #28a745; color: white; font-weight: 600; }
+        body { font-family: 'Poppins', sans-serif; background-color: #f4f7f6; }
+        .navbar { background: #0056b3; }
+        .cart-card { border: none; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); background: white; }
+        .summary-card { border: none; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); background: white; position: sticky; top: 20px; }
+        .price-text { color: #0056b3; font-weight: 700; font-size: 1.1rem; }
+        .total-text { color: #0056b3; font-weight: 800; font-size: 1.5rem; }
     </style>
 </head>
 <body>
 
-<div class="container mt-5">
-    @if(session('error')) <div class="alert alert-danger text-center">{{ session('error') }}</div> @endif
-    @if(session('success')) <div class="alert alert-success text-center">{{ session('success') }}</div> @endif
+<nav class="navbar navbar-expand-lg navbar-dark shadow-sm mb-5">
+    <div class="container">
+        <a class="navbar-brand font-weight-bold" href="/">Xeplin Petshop</a>
+        <div class="navbar-nav ml-auto flex-row align-items-center">
+            <a href="/" class="btn btn-outline-light btn-sm mr-3">Alışverişe Dön</a>
+            @auth
+                <a href="{{ route('admin.dashboard') }}" class="btn btn-light btn-sm mr-2 font-weight-bold">Yönetim</a>
+            @endauth
+        </div>
+    </div>
+</nav>
 
+<div class="container">
+    <h2 class="font-weight-bold mb-4 text-dark">🛒 Alışveriş Sepetim</h2>
+    
     <div class="row">
-        <div class="col-md-8">
-            <div class="card cart-card p-4 shadow-sm">
-                <h4 class="mb-4">Sepetim ({{ count(session('cart', [])) }} Ürün)</h4>
-                @if(session('cart'))
-                    @foreach(session('cart') as $id => $item)
-                    <div class="row align-items-center mb-3 border-bottom pb-3">
-                        <div class="col-2"><img src="{{ asset($item['image']) }}" class="cart-img"></div>
-                        <div class="col-4"><strong>{{ $item['title'] }}</strong></div>
-                        <div class="col-2">{{ $item['quantity'] }} Adet</div>
-                        <div class="col-2 text-primary font-weight-bold">{{ number_format($item['price'] * $item['quantity'], 2) }} ₺</div>
-                        <div class="col-2"><a href="/cart/remove/{{$id}}" class="btn btn-sm btn-outline-danger">Sil</a></div>
-                    </div>
-                    @endforeach
-                    <h4 class="text-right mt-3">Toplam: {{ number_format(array_sum(array_map(function($item) { return $item['price'] * $item['quantity']; }, session('cart', []))), 2) }} ₺</h4>
-                @else
-                    <p class="text-center py-4">Sepetiniz boş. <a href="/">Alışverişe devam edin!</a></p>
-                @endif
+        <div class="col-lg-8 mb-4">
+            <div class="card cart-card p-3">
+                <div class="table-responsive">
+                    <table class="table table-borderless table-hover mb-0">
+                        <thead class="border-bottom">
+                            <tr>
+                                <th>Ürün Adı</th>
+                                <th>Fiyat</th>
+                                <th class="text-right">İşlem</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {{-- Fiyatları toplamak için başlangıç değişkeni --}}
+                            @php $toplamTutar = 0; @endphp
+                            
+                            @if(isset($cartItems) && $cartItems->count() > 0)
+                                @foreach($cartItems as $item)
+                                    {{-- Her dönüşte ürünün fiyatını adetiyle çarpıp toplama ekliyoruz --}}
+                                    @php $toplamTutar += ($item->price * $item->quantity); @endphp
+                                    
+                                    <tr class="border-bottom">
+                                        <td class="align-middle">
+                                            <h6 class="font-weight-bold mb-0">{{ $item->title }}</h6>
+                                            {{-- ADET BİLGİSİ EKLENDİ --}}
+                                            <small class="text-muted font-weight-bold">Adet: {{ $item->quantity }}</small>
+                                        </td>
+                                        
+                                        {{-- FİYAT KISMI ADET İLE ÇARPILARAK DÜZENLENDİ --}}
+                                        <td class="align-middle price-text">
+                                            {{ number_format($item->price * $item->quantity, 2) }} ₺
+                                        </td>
+                                        
+                                        <td class="align-middle text-right">
+                                            <a href="/cart/remove/{{ $item->id }}" class="btn btn-sm btn-outline-danger rounded-pill px-3">Sil</a>
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            @else
+                                <tr>
+                                    <td colspan="3" class="text-center py-5">
+                                        <h5 class="text-muted">Sepetiniz şu an boş.</h5>
+                                        <a href="/" class="btn btn-primary rounded-pill mt-2">Hemen Alışverişe Başla</a>
+                                    </td>
+                                </tr>
+                            @endif
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
 
-        <div class="col-md-4">
-            <div class="method-box shadow-sm">
-                <h5>Ödeme Yöntemini Seçin</h5>
-                <hr>
-                @if(!empty(session('cart')))
-                    <a href="/odeme?method=kart" class="btn btn-trendyol btn-block mb-3">
-                        Kredi Kartı ile Öde
-                    </a>
-                    <a href="/odeme?method=kapida" class="btn btn-success-custom btn-block">
-                        Kapıda Ödeme ile Devam Et
-                    </a>
-                @else
-                    <p class="text-muted">Sepetiniz boş, işlem yapılamaz.</p>
-                @endif
+        <div class="col-lg-4">
+            <div class="card summary-card p-4">
+                <h5 class="font-weight-bold border-bottom pb-3 mb-4">Sipariş Özeti</h5>
+                
+                <div class="d-flex justify-content-between mb-3">
+                    <span class="text-muted font-weight-bold">Ara Toplam</span>
+                    <span class="font-weight-bold">{{ number_format($toplamTutar, 2) }} ₺</span>
+                </div>
+                
+                <div class="d-flex justify-content-between mb-4">
+                    <span class="text-muted font-weight-bold">Kargo Ücreti</span>
+                    <span class="text-success font-weight-bold">Ücretsiz</span>
+                </div>
+                
+                <div class="d-flex justify-content-between border-top pt-4 mb-4">
+                    <span class="font-weight-bold text-dark h5 mb-0">Genel Toplam</span>
+                    <span class="total-text">{{ number_format($toplamTutar, 2) }} ₺</span>
+                </div>
+                
+                <a href="/odeme" class="btn btn-success btn-block rounded-pill font-weight-bold py-3 shadow-sm">
+                    Alışverişi Tamamla
+                </a>
             </div>
         </div>
     </div>
 </div>
 
+<script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 </body>
 </html>

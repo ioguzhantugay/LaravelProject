@@ -26,19 +26,25 @@ class ProductController extends Controller
         $validated = $request->validate([
             'title'       => 'required|string|max:255',
             'price'       => 'required|numeric',
+            'stock'       => 'required|integer|min:0',
             'category_id' => 'required|exists:categories,id',
             'image'       => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
 
-        $data = $request->except('image');
+        // Yeni ürün nesnesi oluştur
+        $product = new Product();
+        $product->title       = $request->title;
+        $product->price       = $request->price;
+        $product->stock       = $request->stock; // Stok kesinlikle buraya atanıyor
+        $product->category_id = $request->category_id;
 
         if ($request->hasFile('image')) {
-            $imageName = time() . '.' . $request->image->extension();
-            $request->image->move(public_path('img/products'), $imageName);
-            $data['image'] = 'img/products/' . $imageName;
+            $imageName = time() . '_' . $request->file('image')->getClientOriginalName();
+            $request->file('image')->move(public_path('img/products'), $imageName);
+            $product->image = 'img/products/' . $imageName;
         }
 
-        Product::create($data);
+        $product->save(); // Veritabanına kaydet
 
         return redirect('/admin/products')->with('success', 'Ürün başarıyla eklendi!');
     }
@@ -56,24 +62,28 @@ class ProductController extends Controller
         $validated = $request->validate([
             'title'       => 'required|string|max:255',
             'price'       => 'required|numeric',
+            'stock'       => 'required|integer|min:0',
             'category_id' => 'required|exists:categories,id',
             'image'       => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
 
-        $data = $request->except('image');
+        // Mevcut ürünü güncelle
+        $product->title       = $request->title;
+        $product->price       = $request->price;
+        $product->stock       = $request->stock;
+        $product->category_id = $request->category_id;
 
         if ($request->hasFile('image')) {
-            // Eski resmi sil
             if ($product->image && File::exists(public_path($product->image))) {
                 File::delete(public_path($product->image));
             }
             
-            $imageName = time() . '.' . $request->image->extension();
-            $request->image->move(public_path('img/products'), $imageName);
-            $data['image'] = 'img/products/' . $imageName;
+            $imageName = time() . '_' . $request->file('image')->getClientOriginalName();
+            $request->file('image')->move(public_path('img/products'), $imageName);
+            $product->image = 'img/products/' . $imageName;
         }
 
-        $product->update($data);
+        $product->save();
 
         return redirect('/admin/products')->with('success', 'Ürün başarıyla güncellendi!');
     }

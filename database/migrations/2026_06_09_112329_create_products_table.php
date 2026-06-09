@@ -13,16 +13,16 @@ return new class extends Migration
     {
         Schema::create('products', function (Blueprint $table) {
             $table->id();
-            $table->string('title'); // Ürünün adı (Örn: Micranthemum Monte Carlo)
-            $table->text('description')->nullable(); // Ürün açıklaması
-            $table->decimal('price', 10, 2); // Fiyatı
-            $table->integer('quantity')->default(0); // Stok adedi
-            $table->string('image')->nullable(); // Ürün fotoğrafının yolu
-            $table->string('status')->default('True'); // Sitede aktif mi?
-            $table->timestamps(); // Eklenme ve güncellenme tarihleri
+            $table->string('title');
+            $table->text('description')->nullable();
+            $table->decimal('price', 10, 2);
+            $table->integer('stock')->default(0); // 'quantity' yerine 'stock' olarak güncellendi
+            $table->string('image')->nullable();
+            $table->string('status')->default('True');
+            $table->foreignId('category_id')->nullable()->constrained(); // Kategori ilişkisi için
+            $table->timestamps();
         });
     }
-
 
     /**
      * Reverse the migrations.
