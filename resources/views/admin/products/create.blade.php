@@ -10,6 +10,17 @@
 <div class="container mt-5">
     <div class="row">
         <div class="col-md-8 offset-md-2">
+            
+            @if ($errors->any())
+                <div class="alert alert-danger">
+                    <ul>
+                        @foreach ($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
+
             <div class="card shadow">
                 <div class="card-header bg-primary text-white">
                     <h4 class="mb-0">Yeni Akvaryum Ürünü Ekle</h4>
@@ -21,6 +32,16 @@
                         <div class="form-group mb-3">
                             <label class="font-weight-bold">Ürün Adı</label>
                             <input type="text" name="title" class="form-control" value="{{ old('title') }}" placeholder="Örn: Hemianthus callitrichoides" required>
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label class="font-weight-bold">Kategori</label>
+                            <select name="category_id" class="form-control" required>
+                                <option value="">Kategori Seçin</option>
+                                @foreach($categories as $category)
+                                    <option value="{{ $category->id }}">{{ $category->name }}</option>
+                                @endforeach
+                            </select>
                         </div>
                         
                         <div class="form-group mb-3">

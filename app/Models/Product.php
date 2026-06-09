@@ -10,9 +10,8 @@ class Product extends Model
     use HasFactory;
 
     /**
-     * Veritabanında toplu atama (mass assignment) yaparken 
-     * hangi sütunların doldurulabileceğini belirtiyoruz.
-     * category_id'yi eklemeyi unutma!
+     * Veritabanı ile etkileşime girerken doldurulabilir sütunlar.
+     * Bu sütunlar ProductController içerisindeki create/update işlemlerinde kullanılır.
      */
     protected $fillable = [
         'title',
@@ -25,8 +24,18 @@ class Product extends Model
     ];
 
     /**
+     * Veritabanında sütun türlerini belirtmek (opsiyonel ama iyi bir pratiktir).
+     * Laravel'in veriyi işleme biçimini optimize eder.
+     */
+    protected $casts = [
+        'price' => 'decimal:2',
+        'quantity' => 'integer',
+        'category_id' => 'integer',
+    ];
+
+    /**
      * İlişki: Bir ürün bir kategoriye aittir.
-     * (One-to-Many'nin tersi / Inverse relationship)
+     * Bu sayede $product->category->name diyerek kategori adına ulaşabilirsin.
      */
     public function category()
     {

@@ -4,119 +4,84 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Product;
-use App\Models\Category; // Kategori modelini ekledik
+use App\Models\Category;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\File;
 
 class ProductController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index()
     {
         $products = Product::all();
         return view('admin.products.index', compact('products'));
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
     public function create()
     {
-        // Kategorileri çekip view dosyasına gönderiyoruz
-        $categories = Category::all();
-        return view('admin.products.create', compact('categories'));
+        return view('admin.products.create', ['categories' => Category::all()]);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request)
     {
-        $request->validate([
-            'title' => 'required',
-            'price' => 'required|numeric',
-            'category_id' => 'required|exists:categories,id', // Kategori seçimi zorunlu
+        $validated = $request->validate([
+            'title'       => 'required|string|max:255',
+            'price'       => 'required|numeric',
+            'category_id' => 'required|exists:categories,id',
+            'image'       => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
 
-        $product = new Product();
-        $product->title = $request->title;
-        $product->description = $request->description;
-        $product->price = $request->price;
-        $product->quantity = $request->quantity;
-        $product->category_id = $request->category_id; // Kategori ID'sini kaydediyoruz
-        $product->status = $request->status;
+        $data = $request->except('image');
 
         if ($request->hasFile('image')) {
-            $imageName = time().'.'.$request->image->extension();
+            $imageName = time() . '.' . $request->image->extension();
             $request->image->move(public_path('img/products'), $imageName);
-            $product->image = 'img/products/'.$imageName;
+            $data['image'] = 'img/products/' . $imageName;
         }
 
-        $product->save();
+        Product::create($data);
 
         return redirect('/admin/products')->with('success', 'Ürün başarıyla eklendi!');
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
-    {
-        //
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
     public function edit(Product $product)
     {
-        // Düzenleme ekranında da kategorileri listelememiz lazım
-        $categories = Category::all();
-        return view('admin.products.edit', compact('product', 'categories'));
+        return view('admin.products.edit', [
+            'product'    => $product,
+            'categories' => Category::all()
+        ]);
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
     public function update(Request $request, Product $product)
     {
-        $request->validate([
-            'title' => 'required',
-            'price' => 'required|numeric',
+        $validated = $request->validate([
+            'title'       => 'required|string|max:255',
+            'price'       => 'required|numeric',
             'category_id' => 'required|exists:categories,id',
+            'image'       => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
 
-        // Ürün bilgilerini güncelle
-        $product->title = $request->title;
-        $product->description = $request->description;
-        $product->price = $request->price;
-        $product->quantity = $request->quantity;
-        $product->category_id = $request->category_id; // Kategori ID'sini güncelliyoruz
+        $data = $request->except('image');
 
-        // Eğer yeni bir resim yüklediyse güncelle
         if ($request->hasFile('image')) {
-            if($product->image && file_exists(public_path($product->image))) {
-                unlink(public_path($product->image));
+            // Eski resmi sil
+            if ($product->image && File::exists(public_path($product->image))) {
+                File::delete(public_path($product->image));
             }
             
-            $imageName = time().'.'.$request->image->extension();
+            $imageName = time() . '.' . $request->image->extension();
             $request->image->move(public_path('img/products'), $imageName);
-            $product->image = 'img/products/'.$imageName;
+            $data['image'] = 'img/products/' . $imageName;
         }
 
-        $product->save();
+        $product->update($data);
 
         return redirect('/admin/products')->with('success', 'Ürün başarıyla güncellendi!');
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
     public function destroy(Product $product)
     {
-        if($product->image && file_exists(public_path($product->image))) {
-            unlink(public_path($product->image));
+        if ($product->image && File::exists(public_path($product->image))) {
+            File::delete(public_path($product->image));
         }
 
         $product->delete();
